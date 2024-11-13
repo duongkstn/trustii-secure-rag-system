@@ -13,6 +13,11 @@ from tqdm import tqdm
 tqdm.pandas()
 
 def processing_df(df):
+    """
+    Processing dataframe
+    :param df: Pandas dataframe
+    :return: processed dataframe
+    """
     df.fillna("", inplace=True)
     return df
 df_train = processing_df(pd.read_csv("data/train.csv", dtype=str))
@@ -22,24 +27,18 @@ df_train.drop_duplicates(inplace=True)
 
 
 texts = df_train["Response"].values.tolist()
-
+# Declare embedding model
 embeddings = OllamaEmbeddings(model="all-minilm:l6-v2", base_url=OLLAMA_URL)
 
 PAIR_FORMAT = """{question} {answer}"""
 
-
-PAIR_METADATA_FORMAT = \
-"""
-Question: {question},
-Answer: {answer},
-"""
-
+# Create LangChain Document from training data
 docs = [Document(page_content=PAIR_FORMAT.format(question=question, answer=answer),
                   metadata={"info": "pair", "question": question, "answer": answer}
                  ) for question, answer in zip(df_train["Query"].values.tolist(), df_train["Response"].values.tolist())
         ]
 
-
+# Load dumped vector store
 vector_store = FAISS.load_local(
     folder_path="./saved_dir_db_faiss",
     index_name="faiss_pair_collection",
@@ -59,24 +58,36 @@ Question: {question}
 Answer: """
 
 
-def doc_to_text(doc):
-    return PAIR_METADATA_FORMAT.format(question=doc.metadata["question"], answer=doc.metadata["answer"])
+PAIR_METADATA_FORMAT = \
+"""
+Question: {question},
+Answer: {answer},
+"""
 
 def format_docs(docs):
+    """
+    Feed retrieved documents to prompt before inputting to LLM
+    :param docs: list LagnChain documents
+    :return: str
+    """
+    def doc_to_text(doc):
+        return PAIR_METADATA_FORMAT.format(question=doc.metadata["question"], answer=doc.metadata["answer"])
     return "\n---\n".join([doc_to_text(doc) for doc in docs])
 
+# Prompt template for LLM as QA Assistant
 prompt_template = ChatPromptTemplate.from_template(PROMPT_TEMPLATE)
 
 
-def function(x):
+def identity(x):
     return x
 
-
+# Retriever Chain
 retriever_chain = (
     dict(context=retriever | format_docs, question=RunnablePassthrough())
-    | RunnableLambda(function)
+    | RunnableLambda(identity)
 )
 
+# QA Chain
 rag_chain: RunnableSerializable[str, str] = (
     retriever_chain
     | prompt_template
@@ -93,7 +104,10 @@ You a technology expert, make up answer as best as you can. DO NOT EXPLAIN ANYTH
 Question: {question}
 Answer: """
 
+# Prompt template for LLM as Tech expert
 prompt_expert_template = ChatPromptTemplate.from_template(EXPERT_PROMPT_TEMPLATE)
+
+# Tech Expert Chain
 expert_chain = (
     retriever_chain
     | prompt_expert_template
@@ -102,6 +116,11 @@ expert_chain = (
 )
 
 def inference(question: str) -> str:
+    """
+    Full flow for inference
+    :param question: input question
+    :return: output result
+    """
     rag_result = rag_chain.invoke(question)
     if "not_found_answer" in rag_result.lower():
         return expert_chain.invoke(question)

@@ -107,14 +107,16 @@ Full pipeline is implemented in `flow_langchain_full.py`.
 ### Setup
 To install, run `pip install -r requirements.txt`
 
-### Inference result
+### Inference test dataset
 To fully run test data, run `python flow_langchain_full.py`, it will output `submission/submission_langchain_full.csv` file.
 
-To run service, run `python api.py`
+### Run service without docker
+To run service, run `python api.py`, remember start ollama server first and download ollama models.
 
-### Using Docker
+### Run service with Docker
 To run service, run `sudo docker compose up`
 
+### API
 To infer a sentence, run
 ```
 curl --location 'http://0.0.0.0:11436/infer' --header 'Content-Type: application/json' --data '{
@@ -126,6 +128,8 @@ Result as follows:
 {"success":true,"result":"Secure Real-time Protocol,"}
 ```
 
+### Hardware
+I currently use NVIDIA GeForce GTX 1080 Ti 12GB VRAM.
 
 
 

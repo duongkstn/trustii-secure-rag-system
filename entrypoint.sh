@@ -8,7 +8,7 @@ pid=$!
 # Pause for Ollama to start.
 sleep 5
 
-echo "🔴 Retrieve LLAMA3 model..."
+echo "🔴 Retrieve Ollama models..."
 ollama pull all-minilm:l6-v2
 ollama pull qwen2.5:latest
 ollama list

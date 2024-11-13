@@ -11,7 +11,7 @@ coloredlogs.install(
 )
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-app = FastAPI()
+app = FastAPI()  # FastAPI App
 
 
 class T(BaseModel):
@@ -19,6 +19,11 @@ class T(BaseModel):
 
 @app.post("/infer")
 async def infer(data: T):
+    """
+    Inference API
+    :param data: dict of question text
+    :return: {"success": True, "resut": str} or {"success": False}
+    """
     try:
         text = data.text
         res = {
