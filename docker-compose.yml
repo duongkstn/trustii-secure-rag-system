@@ -1,0 +1,42 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: trusii_secure_rag_system
+    environment:
+      - SERVICE_HOST=0.0.0.0
+      - SERVICE_PORT=8000
+      - WORKERS=1
+      - OLLAMA_URL=ollama:11434
+    networks:
+      - my_app
+    ports:
+      - 11436:8000
+    depends_on:
+      - ollama
+  ollama:
+    volumes:
+      - ./ollama/ollama:/root/.ollama
+      - ./entrypoint.sh:/entrypoint.sh
+    container_name: ollama
+    pull_policy: always
+    tty: true
+    restart: unless-stopped
+    image: ollama/ollama:latest
+    ports:
+      - 11435:11434
+    environment:
+      - OLLAMA_KEEP_ALIVE=24h
+    networks:
+      - my_app
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
+    entrypoint: ["/usr/bin/bash", "/entrypoint.sh"]
+networks:
+    my_app:

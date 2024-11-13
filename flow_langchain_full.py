@@ -1,13 +1,13 @@
 import faiss
 from langchain_community.vectorstores import FAISS
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_ollama.embeddings import OllamaEmbeddings
 import langchain_community
 from langchain.docstore.document import Document
 from langchain.prompts import ChatPromptTemplate
 from langchain_ollama.llms import OllamaLLM
 from langchain_core.runnables import RunnableLambda, RunnablePassthrough, RunnableSerializable
 from langchain_core.output_parsers import StrOutputParser
-
+from config import OLLAMA_URL
 import pandas as pd
 from tqdm import tqdm
 tqdm.pandas()
@@ -23,7 +23,7 @@ df_train.drop_duplicates(inplace=True)
 
 texts = df_train["Response"].values.tolist()
 
-embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+embeddings = OllamaEmbeddings(model="all-minilm:l6-v2", base_url=OLLAMA_URL)
 
 PAIR_FORMAT = """{question} {answer}"""
 
@@ -47,7 +47,7 @@ vector_store = FAISS.load_local(
     allow_dangerous_deserialization=True
 )
 retriever = vector_store.as_retriever(k=20)
-model = OllamaLLM(model="qwen2.5", base_url="localhost:11434")
+model = OllamaLLM(model="qwen2.5", base_url=OLLAMA_URL)
 
 PROMPT_TEMPLATE = """
 Answer the question using only the following questions and answers:
@@ -73,8 +73,8 @@ def function(x):
 
 
 retriever_chain = (
-        dict(context=retriever | format_docs, question=RunnablePassthrough())
-        | RunnableLambda(function)
+    dict(context=retriever | format_docs, question=RunnablePassthrough())
+    | RunnableLambda(function)
 )
 
 rag_chain: RunnableSerializable[str, str] = (
@@ -101,7 +101,7 @@ expert_chain = (
     | StrOutputParser()
 )
 
-def inference(question):
+def inference(question: str) -> str:
     rag_result = rag_chain.invoke(question)
     if "not_found_answer" in rag_result.lower():
         return expert_chain.invoke(question)

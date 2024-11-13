@@ -1,8 +1,8 @@
 from langchain_qdrant import QdrantVectorStore
-from langchain_huggingface import HuggingFaceEmbeddings
 from langchain.docstore.document import Document
 from langchain.prompts import ChatPromptTemplate
 from langchain_ollama.llms import OllamaLLM
+from langchain_ollama.embeddings import OllamaEmbeddings
 import pandas as pd
 from tqdm.notebook import tqdm
 tqdm.pandas()
@@ -18,7 +18,7 @@ df_test = processing_df(pd.read_csv("data/test.csv", dtype=str))
 
 texts = df_train["Response"].values.tolist()
 
-embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+embeddings = OllamaEmbeddings(model="all-minilm:l6-v2", base_url="localhost:11434")
 
 # RESPONSE_FORMAT = """Context: {text}"""
 PAIR_FORMAT = """Question: {response}\nAnswer: {query}"""
