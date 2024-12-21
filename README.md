@@ -1,5 +1,5 @@
 # Trustii's Secure Offline RAG System
-
+***[UPDATE December 2024]: I got top-5 in final result and top-2 in private leaderboard***
 ## Introduction
 This competition aims to build a flexible local retrieval-augumented-generation (RAG) system: Develop a RAG system that generates embeddings using an open-source LLM, the system must support local execution without relying on external API calls. The system should be flexible and capable of handling various types of text data, including but not limited to Q&A datasets, websites, code snippets, documentation, and more.
 
